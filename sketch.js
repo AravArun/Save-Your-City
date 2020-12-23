@@ -1,34 +1,49 @@
 var scene, jet;
-var scene_img, scene2_img, jet_img, bomb_img, cow_img, human1_img, human2_img, human3_img, human4_img, human5_img;
-var building1_img, building2_img, building3_img, building4_img;
-var friendsGroup, enemiesGroup, bombGroup;
-var enemy1_img, enemy2_img, enemy3_img, enemy4_img, enemy5_img, enemy6_img;
-var ground;
+var scene_img,jet_img, bomb_img, cow_img, human1_img, human2_img, human3_img, human4_img, human5_img;
+var building1_img, building2_img, building3_img, building4_img, score500_img, score1500_img, score2000_img;;
+var peopleGroup, enemiesGroup, bombGroup;
+var enemy1_img, enemy2_img, enemy3_img, enemy4_img, enemy5_img, enemy6_img, warning_img;
+var ground, count, lives, gameState, intro_img, gameOver_img, heart_img;
+
 function preload(){
   scene_img = loadImage("media/bgImage.jpg");
-  scene2_img = loadImage("media/bg1.jpg");
   jet_img = loadImage('media/jet.png');
   bomb_img = loadImage('media/bomb.png');
+  //friends images
   cow_img = loadImage('media/cow.png');
+  //1) humans images
   human1_img = loadImage('media/human1.png');
   human2_img = loadImage('media/human2.png');
   human3_img = loadImage('media/human3.png');
   human4_img = loadImage('media/human4.png');
   human5_img = loadImage('media/human5.png');
-  building1_img = loadImage('media/building1.png');
+  //2) building images
+  building1_img = loadImage('media/building_1.png');
   building2_img = loadImage('media/building2.png');
   building3_img = loadImage('media/building3.png');
   building4_img = loadImage('media/building4.png');
+  // Enemy images
   enemy1_img = loadImage('media/enemy1.png');
   enemy2_img = loadImage('media/enemy2.png');
   enemy3_img = loadImage('media/enemy3.png');
   enemy4_img = loadImage('media/enemy4.png');
   enemy5_img = loadImage('media/enemy5.png');
   enemy6_img = loadImage('media/enemy6.png');
+  //interaction images
+  warning_img = loadImage('media/kill.png');
+  score500_img = loadImage('media/points500.png');
+  score1500_img = loadImage('media/points1500.png');
+  score2000_img = loadImage('media/points2000.png');
+  intro_img = loadImage('media/intro.png');
+  gameOver_img = loadImage('media/gameOver.jpg');
+  heart_img = loadImage('media/heart.png');
 }
 
 function setup() {
   createCanvas(displayWidth - 20, displayHeight - 130);
+  count = 0;
+  lives = 3;
+  gameState = 'play';
   scene = createSprite(width/2, height/2 - 100, width, height);
   scene.addImage(scene_img);
   scene.scale = 4;
@@ -40,36 +55,76 @@ function setup() {
 
   ground = createSprite(width/2, 730, width, 20);
   ground.x = ground.width / 2;
-  ground.velocityX = -2;
   ground.visible = false;
 
-  friendsGroup = new Group();
+  peopleGroup = new Group();
   enemiesGroup = new Group();
   bombGroup = new Group();
 }
 
 function draw() {
   background("lightBlue");  
+
+  if(gameState == 'play'){
+    if(scene.x < width/4){
+      scene.x = width/2;
+    }
   
-  if(scene.x < width/4){
-    scene.x = width/2;
-  }
-
-  if (ground.x < 0) {
-    ground.x = ground.width / 2;
-  }
-
-  if(keyWentDown('space')){
-    spawnBomb();
-  }
+    if(keyWentDown('space')){
+      spawnBomb();
+    }
+    
+    spawnPeople();
   
-  spawnPeople();
+    if(enemiesGroup.isTouching(bombGroup)){
+      enemiesGroup.destroyEach();
+      bombGroup.destroyEach();
+      count = count + 20;
+    }
+  
+    if(bombGroup.isTouching(ground)){
+      bombGroup.destroyEach();
+    }
+  
+    if(bombGroup.isTouching(peopleGroup)){
+      var warning = createSprite(width/2,height/2);
+      warning.addImage(warning_img);
+      warning.lifetime = 30;
+      bombGroup.destroyEach();
+      peopleGroup.destroyEach(); 
+      lives--;
+    }
 
-  if(enemiesGroup.isTouching(bombGroup)){
-    enemiesGroup.destroyEach();
-    bombGroup.destroyEach();
+    if(lives == 0){
+      gameState = 'end';
+    }
   }
+  else if(gameState == 'end'){
+    console.log('end')
+  }
+
+  // switch(count){
+  //   case 40: var appreciationText = createSprite(width/2, height/2);
+  //     appreciationText.addImage(score500_img);
+  //     appreciationText.lifetime = 5;
+  //     break;
+
+  //   case 60: var appreciationText = createSprite(width/2, height/2);
+  //     appreciationText.addImage(score1500_img);
+  //     appreciationText.lifetime = 30;
+  //     break;
+
+  //   case 80: var appreciationText = createSprite(width/2, height/2);
+  //     appreciationText.addImage(score2000_img);
+  //     appreciationText.lifetime = 30;
+  //     break;
+  // }
+  
   drawSprites();
+  fill("blue");
+  textSize(30)
+  text("score: "+count,width - 200, 150);
+  text("lives: " + lives,width - 200, 100);
 }
 
 function spawnBomb(){
@@ -82,97 +137,100 @@ function spawnBomb(){
 
 function spawnPeople(){
   if(frameCount % 90 == 0){
-    var friends = createSprite(width, 680);
-    friends.velocityX = -3;
+    var people = createSprite(width, 680);
+    people.velocityX = -3;
+    people.setCollider('circle', 0, 0, 50);
+
+    people.lifetime = Math.round(-width/people.velocityX);
+
     switch(Math.round(random(1,16))){
-      case 1: friends.addImage(cow_img);
-        friends.scale = 0.1;
-        friendsGroup.add(friends);
+      case 1: people.addImage(cow_img);
+        people.scale = 0.1;
+        peopleGroup.add(people);
         break;
-      case 2: friends.addImage(human1_img);
-        friends.y = 625;
-        friendsGroup.add(friends);
+      case 2: people.addImage(human1_img);
+        people.y = 625;
+        peopleGroup.add(people);
         break;
-      case 3: friends.addImage(human2_img);
-        friends.scale = 0.3;
-        friends.y = 650
-        friendsGroup.add(friends);
+      case 3: people.addImage(human2_img);
+        people.scale = 0.3;
+        people.y = 650
+        peopleGroup.add(people);
         break;
-      case 4: friends.addImage(human3_img);
-        friends.scale = 0.3;
-        friends.y = 660;
-        friendsGroup.add(friends);
+      case 4: people.addImage(human3_img);
+        people.scale = 0.3;
+        people.y = 660;
+        peopleGroup.add(people);
         break;
-      case 5: friends.addImage(human4_img);
-        friends.scale = 0.3;
-        friends.y = 670
-        friendsGroup.add(friends);
+      case 5: people.addImage(human4_img);
+        people.scale = 0.3;
+        people.y = 670
+        peopleGroup.add(people);
         break;
-      case 6: friends.addImage(human5_img);
-        friends.scale = 0.3;
-        friends.y = 665;
-        friendsGroup.add(friends);
+      case 6: people.addImage(human5_img);
+        people.scale = 0.3;
+        people.y = 665;
+        peopleGroup.add(people);
         break;
-      case 7: friends.addImage(building1_img);
-        friends.y = 590;
-        friends.scale = 1.2;
-        friendsGroup.add(friends);
+      case 7: people.addImage(building1_img);
+        people.y = 590;
+        people.scale = 1.2;
+        peopleGroup.add(people);
         break;
-      case 8: friends.addImage(building2_img);
-        friends.scale = 1.2
-        friends.y = 580;
-        friendsGroup.add(friends);
+      case 8: people.addImage(building2_img);
+        people.scale = 1.2
+        people.y = 580;
+        peopleGroup.add(people);
         break;
-      case 9: friends.addImage(building3_img);
-        friends.scale = 1.2
-        friends.y = 580;
-        friendsGroup.add(friends);
+      case 9: people.addImage(building3_img);
+        people.scale = 1.2
+        people.y = 580;
+        peopleGroup.add(people);
         break;
-      case 10: friends.addImage(building4_img);
-        friends.scale = 1.5
-        friends.y = 560;
-        friendsGroup.add(friends);
+      case 10: people.addImage(building4_img);
+        people.scale = 1.5
+        people.y = 560;
+        peopleGroup.add(people);
         break;
-      case 11: friends.addImage(enemy1_img);
-      friends.scale = 0.4;
-      friends.y = 650
-      enemiesGroup.add(friends);
+      case 11: people.addImage(enemy1_img);
+      people.scale = 0.4;
+      people.y = 650
+      enemiesGroup.add(people);
       break;
 
-      case 12: friends.addImage(enemy2_img);
-      friends.scale = 0.4;
-      friends.y = 650
-      enemiesGroup.add(friends);
+      case 12: people.addImage(enemy2_img);
+      people.scale = 0.4;
+      people.y = 650
+      enemiesGroup.add(people);
       break;
 
-      case 13: friends.addImage(enemy3_img);
-      friends.scale = 0.4;
-      friends.y = 650
-      enemiesGroup.add(friends);
+      case 13: people.addImage(enemy3_img);
+      people.scale = 0.4;
+      people.y = 650
+      enemiesGroup.add(people);
       break;
 
-      case 14: friends.addImage(enemy4_img);
-      friends.scale = 0.4;
-      friends.y = 650
-      enemiesGroup.add(friends);
+      case 14: people.addImage(enemy4_img);
+      people.scale = 0.4;
+      people.y = 650
+      enemiesGroup.add(people);
       break;
 
-      case 15: friends.addImage(enemy5_img);
-      friends.scale = 0.4;
-      friends.y = 650
-      enemiesGroup.add(friends);
+      case 15: people.addImage(enemy5_img);
+      people.scale = 0.4;
+      people.y = 650
+      enemiesGroup.add(people);
       break;
 
-      case 16: friends.addImage(enemy6_img);
-      friends.scale = 0.4;
-      friends.y = 650
-      enemiesGroup.add(friends);
+      case 16: people.addImage(enemy6_img);
+      people.scale = 0.4;
+      people.y = 650
+      enemiesGroup.add(people);
       break;
 
-      default: friends.addImage(cow_img);
-        friends.scale = 0.1;
+      default: people.addImage(cow_img);
+        people.scale = 0.1;
         break;
     }
-    friends.lifetime = Math.round(-width/friends.velocityX);
   }
 }
