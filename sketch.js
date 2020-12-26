@@ -3,7 +3,8 @@ var scene_img,jet_img, bomb_img, cow_img, human1_img, human2_img, human3_img, hu
 var building1_img, building2_img, building3_img, building4_img, score500_img, score1500_img, score2000_img;;
 var peopleGroup, enemiesGroup, bombGroup;
 var enemy1_img, enemy2_img, enemy3_img, enemy4_img, enemy5_img, enemy6_img, warning_img;
-var ground, count, lives, gameState, intro_img, gameOver_img, heart_img;
+var ground, count, lives, gameState, intro_img, gameOver_img, heart_img,gameOver;
+var explosion_sound, score_sound, die_sound;
 
 function preload(){
   scene_img = loadImage("media/bgImage.jpg");
@@ -37,6 +38,10 @@ function preload(){
   intro_img = loadImage('media/intro.png');
   gameOver_img = loadImage('media/gameOver.jpg');
   heart_img = loadImage('media/heart.png');
+  //loading sounds
+  explosion_sound = loadSound('media/explosion.mp3');
+  score_sound = loadSound('media/score.wav');
+  die_sound = loadSound('media/die.wav');
 }
 
 function setup() {
@@ -56,6 +61,11 @@ function setup() {
   ground = createSprite(width/2, 730, width, 20);
   ground.x = ground.width / 2;
   ground.visible = false;
+
+  var intro = createSprite(width/2,height/2,width,height);
+  intro.addImage(intro_img);
+  intro.lifetime = 360;
+  
 
   peopleGroup = new Group();
   enemiesGroup = new Group();
@@ -80,10 +90,12 @@ function draw() {
       enemiesGroup.destroyEach();
       bombGroup.destroyEach();
       count = count + 20;
+      score_sound.play();
     }
   
     if(bombGroup.isTouching(ground)){
       bombGroup.destroyEach();
+      explosion_sound.play()
     }
   
     if(bombGroup.isTouching(peopleGroup)){
@@ -93,38 +105,47 @@ function draw() {
       bombGroup.destroyEach();
       peopleGroup.destroyEach(); 
       lives--;
+      die_sound.play();
     }
 
     if(lives == 0){
       gameState = 'end';
     }
+    //scoring();
   }
   else if(gameState == 'end'){
     console.log('end')
+    jet.destroy();
+    enemiesGroup.destroyEach();
+    peopleGroup.destroyEach();
+    gameOver = createSprite(width/2,height/2,width,height)
+    gameOver.addImage(gameOver_img);
   }
 
-  // switch(count){
-  //   case 40: var appreciationText = createSprite(width/2, height/2);
-  //     appreciationText.addImage(score500_img);
-  //     appreciationText.lifetime = 5;
-  //     break;
-
-  //   case 60: var appreciationText = createSprite(width/2, height/2);
-  //     appreciationText.addImage(score1500_img);
-  //     appreciationText.lifetime = 30;
-  //     break;
-
-  //   case 80: var appreciationText = createSprite(width/2, height/2);
-  //     appreciationText.addImage(score2000_img);
-  //     appreciationText.lifetime = 30;
-  //     break;
-  // }
-  
   drawSprites();
   fill("blue");
   textSize(30)
   text("score: "+count,width - 200, 150);
-  text("lives: " + lives,width - 200, 100);
+
+  var x = width - 200;
+  for(var i = 0; i < lives; i++){
+    image(heart_img,x,50,50,50);
+    x += 60;
+  }
+}
+
+function scoring(){
+  switch(count){
+    case 20: die_sound.play();
+    break;
+
+    case 40: explosion_sound.play();
+    break;
+
+    case 60: explosion_sound.play();
+    break;
+  }
+
 }
 
 function spawnBomb(){
