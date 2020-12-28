@@ -45,7 +45,7 @@ function preload(){
 }
 
 function setup() {
-  createCanvas(displayWidth - 20, displayHeight - 130);
+  createCanvas(windowWidth, windowHeight);
   count = 0;
   lives = 3;
   gameState = 'play';
@@ -80,8 +80,9 @@ function draw() {
       scene.x = width/2;
     }
   
-    if(keyWentDown('space')){
+    if(keyWentDown('space') || touches.length > 0){
       spawnBomb();
+      touches = [];
     }
     
     spawnPeople();
